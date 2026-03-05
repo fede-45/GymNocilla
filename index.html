@@ -466,6 +466,11 @@ async function sendAI(){
     });
 
     let reply;
+    if(!IS_NETLIFY && !GEMINI_KEY){
+      hideTyping();
+      addMsg('bot','🔑 Inserisci prima la tua API Key Gemini — premi il tasto "🔑 Chiave" qui sopra.');
+      aiLoading=false; document.getElementById('aiSendBtn').disabled=false; return;
+    }
     if(IS_NETLIFY){
       // Su Netlify: usa la funzione serverless
       const res=await fetch('/api/chat',{
