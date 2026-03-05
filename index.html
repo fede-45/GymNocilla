@@ -191,6 +191,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
         <button class="qbtn" onclick="qAsk('Cosa mangiare prima dell allenamento?')">🥗 Pre-workout</button>
         <button class="qbtn" onclick="qAsk('Come aumentare i pesi progressivamente?')">📈 Progressione</button>
         <button class="qbtn" onclick="qAsk('Cosa significa cedimento controllato?')">💥 Cedimento</button>
+        <button class="qbtn" onclick="showKeyModal()" style="border-color:#3a3a5a;color:#5a5a80;">🔑 Chiave</button>
       </div>
       <div class="ai-input-row">
         <textarea class="ai-ta" id="aiTa" placeholder="Chiedi al tuo coach..." rows="1"
@@ -210,6 +211,18 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
 </nav>
 
 <div class="toast" id="toast"></div>
+
+<!-- API KEY MODAL -->
+<div id="keyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:300;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#10101c;border:1px solid #2e2e4a;border-radius:20px;width:100%;max-width:400px;padding:24px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:#e8b84b;margin-bottom:6px;">🔑 API KEY GEMINI</div>
+    <div style="font-size:0.78rem;color:#8080b0;margin-bottom:18px;line-height:1.6;">Inserisci la tua chiave API di Google Gemini. Viene salvata solo sul tuo telefono, non nel codice.<br><br>Ottienila gratis su <strong style="color:#e8b84b">aistudio.google.com</strong></div>
+    <input id="keyInput" type="password" placeholder="AIzaSy..."
+      style="width:100%;background:#16162a;border:1px solid #2e2e4a;border-radius:10px;color:#e4e0f4;padding:13px 14px;font-family:'Barlow',sans-serif;font-size:0.9rem;outline:none;margin-bottom:12px;">
+    <button onclick="saveApiKey()" style="width:100%;background:#e8b84b;border:none;border-radius:12px;color:#08080f;padding:14px;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;cursor:pointer;">✓ SALVA E CONTINUA</button>
+    <button onclick="skipApiKey()" style="width:100%;background:none;border:none;color:#5a5a80;padding:10px;font-family:'Barlow',sans-serif;font-size:0.78rem;cursor:pointer;margin-top:4px;">Salta — userò l'app senza Coach IA</button>
+  </div>
+</div>
 
 <!-- EDITOR OVERLAY -->
 <div id="editorOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:flex-end;justify-content:center;">
@@ -433,8 +446,8 @@ async function listModels(){
   }catch(e){ addMsg('bot','❌ '+e.message); }
 }
 
-const GEMINI_KEY = "AIzaSyAbOgqhxvO6rAK0mjyIqJ18aap-pCNtEUo";
-const IS_NETLIFY = window.location.hostname !== 'localhost' && window.location.hostname !== '' && window.location.protocol !== 'file:';
+const IS_NETLIFY = window.location.hostname !== 'localhost' && window.location.hostname !== '' && window.location.protocol !== 'file:' && !window.location.hostname.includes('github.io');
+let GEMINI_KEY = localStorage.getItem('gemini_api_key') || '';
 
 async function sendAI(){
   if(aiLoading) return;
@@ -600,9 +613,7 @@ function addNewDay(){
 function removeDay(d){
   const days=Object.keys(P).map(Number);
   if(days.length<=1){ showToast('Almeno 1 giorno!'); return; }
-  if(!confirm(`Rimuovere "${P[d].name}"? I dati salvati per questo giorno verranno persi.`)) return;
   delete P[d];
-  // Rinumera in ordine
   const sorted=Object.keys(P).map(Number).sort((a,b)=>a-b);
   const newP={};
   sorted.forEach((oldKey,i)=>{ newP[i+1]=P[oldKey]; });
@@ -665,7 +676,20 @@ let typEl=null;
 function showTyping(){ const c=document.getElementById('aiMsgs'); typEl=document.createElement('div'); typEl.className='typing'; typEl.innerHTML='<div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>'; c.appendChild(typEl); c.scrollTop=c.scrollHeight; }
 function hideTyping(){ if(typEl){ typEl.remove(); typEl=null; } }
 
+function saveApiKey(){
+  const val = document.getElementById('keyInput').value.trim();
+  if(!val){ showToast('Inserisci una chiave valida!'); return; }
+  GEMINI_KEY = val;
+  localStorage.setItem('gemini_api_key', val);
+  document.getElementById('keyModal').style.display='none';
+  showToast('Chiave salvata! 🔑');
+}
+function skipApiKey(){ document.getElementById('keyModal').style.display='none'; }
+function showKeyModal(){ document.getElementById('keyModal').style.display='flex'; document.getElementById('keyInput').value=GEMINI_KEY; }
+
 loadScheda(); load(); renderAll();
+// Mostra modal chiave solo se non configurata e non su Netlify
+if(!GEMINI_KEY && !IS_NETLIFY) document.getElementById('keyModal').style.display='flex';
 </script>
 </body>
 </html>
